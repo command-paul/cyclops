@@ -1,0 +1,23 @@
+module 1 Serial ipt
+Approach 1 optimised for noob use
+read in put charecter by charecter 
+
+approach2 for api use
+make send data type functions and recieve data type functions to minimise over head 
+
+module 1 potential future USB bulk /  isochronus
+
+module 2 handler
+
+approach 1 hander FLAGS
+Flag Usage
+
+if running check for end flag 
+modify isr to toggle flag when it recieves a certain flag charecter
+else in main check loop 
+
+
+module 3  cool add ons
+ time out check time fnuction 
+ 
+
