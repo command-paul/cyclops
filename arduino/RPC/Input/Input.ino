@@ -6,30 +6,44 @@ Include if necessary
 /*
 	Global Variables
 */
-volatile short OpCall = ;
-volatile short Nargs = ;
-volatile short EXECUTING;
-extern volatile short FLAG = ;
+
+volatile byte Proc1 = ;
+volatile byte Proc2 = ;
+
+volatile byte EXECUTING;
+extern volatile byte FLAG = ;
+
+unsigned int EEPROM_Start = 0;
+unsigned int EEPROM_Ene = 0;
 //Global Variables End
 
 /*
-	Type Defs
+	Structs / Type Defs
 */
-typedef void (*FunctionSet)(short*);
+
+typedef void (*FunctionSet)(byte*);
+
+typedef struct wave {
+	int frequency;
+	int timeout;
+	unsigned int amplitude;
+}wave;
 // Typedefs end
 
 /*
 The Main Arguments Buffer
-the arduino has a 64 byte buffer :P can be increased in the board config 
+the arduino has a 64 byte buffer :P can be increased in the board config
+
+The argumets can be extracted using some functions below or by just memcpy the section of the array onto a structure 
 */
-short Arguments[64]; 
+byte Arguments[64]; 
 
 /*
 RPC FORMAT ::
 1 Start Byte :: Arbitrary
 2 Procedure Bytes
-5 Number of arguments Bytes(4 Bytes for Arguments / 1  byte = more arguments)
-1 Stop Byte :: Arbitrary nonprintable char
+5 Number of arguments Bytes(4 Bytes for Arguments / 1  byte = no. more argument blocks)
+1 Stop Byte :: Arbitrary 
 
 EXTRA ARGUMENTS FORMAT :: 
 17 Bytes (16 bytes For Arguments / 1 Byte =  More Arguments)
@@ -51,9 +65,14 @@ void setup(){
 
 void loop(){
 	if(Serial.available()){ // a good flag for available serial will any way modify isr to signal end of recieved input
-		while(Serial.read()!='l');// Start Byte - Problem infinite loop for random text input
-		ParseInput();
-		// toggle flag to ready to execute 
+		if(Serial.read() == 'R'){
+			int Nsets = ParseInput();
+			int 1=0;
+			while(i<nsets){
+				ParseArguments(i);
+			}
+		Ready = 1;
+		}
 	}
 	if(!EXECUTING && INPUTREADY){
 		FP[OpCall](Arguments , Nargs);
@@ -65,23 +84,27 @@ void loop(){
 	breaks down the Input into the format specified above
 	Returns if additional inputs true
 */
-void ParseInput(){
-	OpCall = Serial.read();
-	int i= Nargs = Serial.read();
-	while(i){
-		Arguments[Nargs-i] = Serial.read(); // Expects the input in a big endian format
-		i--;
+int ParseInput(){
+	Proc1 = Serial.read();
+	Proc2 = Serial.read();
+	for(int i=0;i<8;i++){
+		Arguments[i] = Serial.read(); 
 	}
-	while(Serial.read()!='l'); // End of Transmission byte
-	// flush bauffer
+	byte AddArgs = Serial.read();
+	byte Stop = Serial.read();
+	if(Stop == 'S') return AddArgs; // misc Error Checking :P
+	else return -1;
 }
-
+	
 /* 
 	Parses throught the input stream and appends arguments to the arguments array
 */
 
-int ParseArguments(){
-
+int ParseArguments(int set){
+	int i=0;
+	for(i=0;i<16;i++){
+		Arguments[7+(set*16)+i] = Serial.read(); 
+	}
 }
 
 /* 
@@ -91,25 +114,25 @@ int ParseArguments(){
 	Alternate Modular approach :: declare a structure and simply memcopy the argument 
 	array over the structure
 */
-int Short2int(short * Pointer){ // combines two bytes to a 16 bit integer 
+int byte2int(byte * Pointer){ // combines two bytes to a 16 bit integer 
 	return (int)((*Pointer<<8)+(*pointer));
 }
 
-uint Short2int(short * Pointer){ // combines two bytes to a 16 bit unsigned integer 
-	return (uint)((*Pointer<<8)+(*pointer));
+unsigned int byte2uint(byte * Pointer){ // combines two bytes to a 16 bit unsigned integer 
+	return (unsigned int)((*Pointer<<8)+(*pointer));
 } 
 
-long Short2long(short * Pointer){ // combines two bytes to a 16 bit integer 
-	return (long) Pointer
+long byte2long(byte * Pointer){ // combines two bytes to a 16 bit integer 
+	return (long) Pointer // TODO
 }
 
-unsigned long Short2long(short * Pointer){ // combines two bytes to a 16 bit integer 
-	return (unsigned long) Pointer
+unsigned long byte2ulong(byte * Pointer){ // combines two bytes to a 16 bit integer 
+	return (unsigned long) Pointer // TODO cp from above case
 }
 
-double short2double(short* Pointer){
+double byte2double(byte* Pointer){
 	double temp ;
-	memcpy(temp , Short2long(Pointer),1)
+	memcpy(temp , byte2long(Pointer),4)
 	return temp;
 }
 
@@ -159,6 +182,22 @@ void EndCriticalSection(){ interrupts(); }
 
 // Functions of Infinite exectime
 
+void Sinousoid(byte* inputs){
+	wave sinewave;
+	// section that parses input for relevant data usinng the memcpy approach for general funtions
+	memcpy (inputs sinewave,sizeof(sinewave));
+	//starttime = get time;
+	loop(check timeout || trrmination){
+		output part of the sin wave;
+	}
+	return ; 
+}
+
+void ReadEEPROMwave(byte inputs){
+	// parse through inut for playback frequenncy and sclaing amplitude and time to run innfinite looped signaal for
+}while this can still read EEPROM.read()
+
+/*
 void GenSin100(int a) { 
   Serial.println(a);
   return a;
@@ -212,6 +251,7 @@ FunctionSet SignalGen[] = {function0,
                            function5,
                            function6
                           };
+*/
 
 //End of Sample Function implementations                          
 

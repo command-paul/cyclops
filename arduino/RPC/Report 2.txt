@@ -1,6 +1,7 @@
 module 1 Serial ipt
 Approach 1 optimised for noob use
-read in put charecter by charecter 
+
+read in put charecter by charecter // only way of nitifying signal reception complete is by fixing a RPC size
 
 approach2 for api use
 make send data type functions and recieve data type functions to minimise over head 
@@ -9,8 +10,7 @@ module 1 potential future USB bulk /  isochronus
 
 module 2 handler
 
-approach 1 hander FLAGS
-Flag Usage
+approach 1 hander FLAGS modify isr and check for flag variable config
 
 if running check for end flag 
 modify isr to toggle flag when it recieves a certain flag charecter
@@ -21,3 +21,11 @@ module 3  cool add ons
  time out check time fnuction 
  
 
+//End of Sample Function implementations                          
+
+
+/*	Problems / sols / Comments / misc
+// Looks like all the buffers and counters in the serial library are protected and hence cant be accessed without modifying the librbray
+// work around by either modifying the isr or by adding a last read/ flag variable
+// Suggest writing new isr and making a new arduino uno - cyclops board config file
+*/
