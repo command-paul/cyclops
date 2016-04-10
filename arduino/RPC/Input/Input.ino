@@ -1,16 +1,16 @@
 //Include if necessary
 
-#include<cyclops>
+//#include<cyclops.h>
 
 /*
 	Global Variables
 */
 
-volatile byte Proc1 = ;
-volatile byte Proc2 = ;
+volatile byte Proc1 = 0;
+volatile byte Proc2 = 0;
 
-volatile byte EXECUTING;
-extern volatile byte FLAG = ;
+volatile byte EXECUTING = 0;
+extern volatile byte FLAG = 0;
 
 unsigned int EEPROM_Start = 0;
 unsigned int EEPROM_Ene = 0;
@@ -39,7 +39,7 @@ typedef struct wave {
 /*
 The Main Arguments Buffer
 the arduino has a 64 byte buffer :P can be increased in the board config
-
+ my motiavtions for limiting this are debatable
 The argumets can be extracted using some functions below or by just memcpy the section of the array onto a structure 
 */
 byte Arguments[64]; 
@@ -49,11 +49,11 @@ byte Arguments[64];
 RPC FORMAT ::
 1 Start Byte :: Arbitrary
 2 Procedure Bytes
-5 Number of arguments Bytes(4 Bytes for Arguments / 1  byte = no. more argument blocks)
+5 Number of arguments Bytes(4 Bytes for Arguments / 1  byte = no. more argument blocks of 16 bytes)
 1 Stop Byte :: Arbitrary 
 
 EXTRA ARGUMENTS FORMAT :: 
-17 Bytes (16 bytes For Arguments / 1 Byte =  More Arguments)
+16 Bytes (16 bytes For Arguments will read in multiples of num sets specified above)
 
 This is designed around 1 byte long standard UART implementations  
 */
@@ -70,23 +70,36 @@ This is designed around 1 byte long standard UART implementations
 void setup(){
 	Serial.begin(115200);
 }
-
+byte ww;
 void loop(){
-	if(Serial.available()){ // a good flag for avaislable serial will any way modify isr to signal end of recieved input
-		if(Serial.read() == 'R'){ // Checcking for 
+	if(Serial.available()>=9){ // a good flag for avaislable serial will any way modify isr to signal end of recieved input
+		ww = Serial.read();
+		if((char)ww== 'R'){ // Checcking for 
 			int Nsets = ParseInput();
-			int 1=0;
-			while(i<nsets){
-				ParseArguments(i);
+			Nsets =	Nsets -48; // For Temp DBG with MONITOR TEXT ENTRY
+			int i=0;
+			while(i<Nsets){
+				if(Serial.available()>=16){
+					ParseArguments(i);
+					i++;
+					}
+				}
+			for(int i=0;i<(4+(16*Nsets));i++){
+				Serial.print("  ");
+				Serial.print(Arguments[i]);
+				}
+			Serial.println();
+			// Flag to signify correct input and ready to execute= 1;
 			}
-		Ready = 1;
 		}
-	}
+	/*
 	if(!EXECUTING && INPUTREADY){
 		FP[OpCall](Arguments , Nargs);
 		// call function and pass in arguments 
+	
+		}
+	*/
 	}
-}
 
 /* 	The main Parse input Function
 	breaks down the Input into the format specified above
@@ -100,7 +113,7 @@ int ParseInput(){
 	}
 	byte AddArgs = Serial.read();
 	byte Stop = Serial.read();
-	if(Stop == 'S') return AddArgs; // misc Error Checking :P
+	if((char)Stop == 'S') return AddArgs; // misc Error Checking :P
 	else return -1;
 }
 	
@@ -123,24 +136,28 @@ int ParseArguments(int set){
 	array over the structure
 */
 int byte2int(byte * Pointer){ // combines two bytes to a 16 bit integer 
-	return (int)((*Pointer<<8)+(*pointer));
+	return (int)((*Pointer<<8)+(*Pointer));
 }
 
 unsigned int byte2uint(byte * Pointer){ // combines two bytes to a 16 bit unsigned integer 
-	return (unsigned int)((*Pointer<<8)+(*pointer));
+	return (unsigned int)((*Pointer<<8)+(*Pointer));
 } 
 
 long byte2long(byte * Pointer){ // combines two bytes to a 16 bit integer 
-	return (long) Pointer // TODO
+	long temp;
+	memcpy(&temp , Pointer,sizeof(temp));
+	return temp ;// TODO
 }
 
 unsigned long byte2ulong(byte * Pointer){ // combines two bytes to a 16 bit integer 
-	return (unsigned long) Pointer // TODO cp from above case
+	unsigned long temp ;
+	memcpy(&temp , Pointer,sizeof(temp));
+	return temp; // TODO cp from above case
 }
 
 double byte2double(byte* Pointer){
 	double temp ;
-	memcpy(temp , byte2long(Pointer),4)
+	memcpy(&temp , Pointer,sizeof(temp));
 	return temp;
 }
 
@@ -159,7 +176,7 @@ double byte2double(byte* Pointer){
 bool ChkTerminate(){
 	// check if the previous input has been bufered by looking for the top of the stack  
 	// all protected variables cant expect new users to modify them / approach of making a new board config will not work sinnce that bit is common to all boards
-	return (Serial.available()>=PSIZE);
+	return (Serial.available()>=9); // the size of an input packet
 }
 
 long Timer;
@@ -183,10 +200,26 @@ void StartCrtiticalSection(){ noInterrupts(); }
 void EndCriticalSection(){ interrupts(); }
 // End of Critical Section Functions
 
-/*	Sample Function Implementations 
+/*	Sapmle Function Implementations 
 	Procedure calls grouped together for convenience and modularity(by type / utility)
 	Note ::  please add your function to the function pointer array to enable calling it
 */
+
+// General Utility Functions 
+	/*
+		calls to setup utils for the Dac and other modules here etc..
+	*/
+
+FunctionSet Gen_Util[] = {};
+
+// General Debug Functions
+	/*
+		EchoUART
+		TestWave2Dac
+		Stop
+	*/
+
+FunctionSet Gen_Debug[] = {};
 
 // Simple Wave Functions
 /*
@@ -196,37 +229,42 @@ void EndCriticalSection(){ interrupts(); }
 	Slur rate and slew rate control
 	priscision in the output signal
 */
+
 void Sinousoid(byte* inputs){
 	SimpleWave sinewave;
 	// section that parses input for relevant data usinng the memcpy approach for general funtions
-	memcpy (inputs sinewave,sizeof(sinewave));
+	memcpy (&sinewave,inputs,sizeof(sinewave));
 	//starttime = get time;
+	/*
 	loop(check timeout || trrmination){
-		output part of the sin wave;
+		//output part of the sin wave;
+	
 	}
+	*/
 	return ; 
 }
-void SquareWave(){
+
+void SquareWave(byte* inputs){
 
 }
 
-void Triangle(){
+void Triangle(byte* inputs){
 	
 }
 
-void SigPWM(){
+void SigPWM(byte* inputs){
 
 }
 
-void SigMEM1(){
+void SigMEM1(byte* inputs){
 // devide the 1kb space into 2 segments to save 2 waves i can adda bit to just save one large wave also
 }
 
-void SigMEM2(){
+void SigMEM2(byte* inputs){
 
 }
 
-FunctionSet SignalGen[] = { Sinousoid,
+FunctionSet Sig_Simple[] = { Sinousoid,
 							SquareWave,
 							Triangle,
 							SigPWM,
@@ -241,23 +279,23 @@ FM
 PWM
 */
 
-void SigAM(){
+void SigAM(byte* inputs){
 
 }
 
-void SigFM(){
+void SigFM(byte* inputs){
 
 }
 
-void SigPCM(){
+void SigPCM(byte* inputs){
 
 }
 
-void TDM_AM(){
+void TDM_AM(byte* inputs){
 
 }
 
-FunctionSet SIG_CPLX[] = {SigAM,
+FunctionSet Sig_Cplx[] = {SigAM,
 						  SigFM,
 						  SigPCM,
 						  TDM_AM
@@ -268,7 +306,7 @@ FunctionSet SIG_CPLX[] = {SigAM,
 void WriteEEPROMwave(byte* inputs){
 
 }
-void EEPROM_Status(){
+void EEPROM_Status(byte* inputs){
 
 }
 
