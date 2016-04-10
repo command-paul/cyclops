@@ -226,75 +226,58 @@ void SigMEM2(){
 
 }
 
+FunctionSet SignalGen[] = { Sinousoid,
+							SquareWave,
+							Triangle,
+							SigPWM,
+							SigMEM1,
+							SigMEM2
+							};
+
 // Complex Waveforms [Signal Modulation toolkit ] (ones that take an additional argumetns buffer)
 /*
 AM 
 FM
 PWM
 */
+
 void SigAM(){
 
 }
 
+void SigFM(){
+
+}
+
+void SigPCM(){
+
+}
+
+void TDM_AM(){
+
+}
+
+FunctionSet SIG_CPLX[] = {SigAM,
+						  SigFM,
+						  SigPCM,
+						  TDM_AM
+                          };
 
 // Utility to Read from and store sample waveform to the EEPROM
 
-void WriteEEPROMwave()
-/*
-void GenSin100(int a) { 
-  Serial.println(a);
-  return a;
+void WriteEEPROMwave(byte* inputs){
+
+}
+void EEPROM_Status(){
+
 }
 
-FunctionSet SignalGen[] = {GenSin100,
-                           GenSin100,
-                           GenSin100,
-                           GenSin100,
-                           GenSin100,
-                           GenSin100,
-                           GenSin100
-                          };
+FunctionSet EEPROM_Util[] = { WriteEEPROMwave,
+							  EEPROM_Status
+							  };
 
+// 
 
-
-//Functions of Finite exec time
-int function0(int a) {
-  Serial.println(a);
-  return a;
-}
-int function1(int a) {
-  Serial.println(a + 1);
-  return a + 1;
-}
-int function2(int a) {
-  Serial.println(a + 2);
-  return a + 2;
-}
-int function3(int a) {
-  Serial.println(a + 3);
-  return a + 3;
-}
-int function4(int a) {
-  Serial.println(a + 4);
-  return a + 4;
-}
-int function5(int a) {
-  Serial.println(a + 5);
-  return a + 5;
-}
-int function6(int a) {
-  Serial.println(a + 6);
-  return a + 6;
-}
-FunctionSet SignalGen[] = {function0,
-                           function1,
-                           function2,
-                           function3,
-                           function4,
-                           function5,
-                           function6
-                          };
-*/
 
 //End of Sample Function implementations                          
 
