@@ -1,7 +1,6 @@
-/*
-Include if necessary
+//Include if necessary
+
 #include<cyclops>
-*/
 
 /*
 	Global Variables
@@ -23,12 +22,19 @@ unsigned int EEPROM_Ene = 0;
 
 typedef void (*FunctionSet)(byte*);
 
-typedef struct wave {
-	int frequency;
-	int timeout;
+typedef struct SimpleWave { // size limited to 4 Bytes to be done without an arguments segment
+	unsigned int frequency;
+	byte timeout;
+	byte amplitude;
+}SimpleWave;
+
+typedef struct wave {  
+	unsigned int frequency;
+	unsigned int timeout;
 	unsigned int amplitude;
 }wave;
 // Typedefs end
+
 
 /*
 The Main Arguments Buffer
@@ -37,6 +43,7 @@ the arduino has a 64 byte buffer :P can be increased in the board config
 The argumets can be extracted using some functions below or by just memcpy the section of the array onto a structure 
 */
 byte Arguments[64]; 
+
 
 /*
 RPC FORMAT ::
@@ -51,6 +58,7 @@ EXTRA ARGUMENTS FORMAT ::
 This is designed around 1 byte long standard UART implementations  
 */
 
+
 /* 	Setup and Loop
 		Sticking to The arduino format In order to keep it simple
 	Setup::	Please add all module initialisation functions here or implement procedure
@@ -64,8 +72,8 @@ void setup(){
 }
 
 void loop(){
-	if(Serial.available()){ // a good flag for available serial will any way modify isr to signal end of recieved input
-		if(Serial.read() == 'R'){
+	if(Serial.available()){ // a good flag for avaislable serial will any way modify isr to signal end of recieved input
+		if(Serial.read() == 'R'){ // Checcking for 
 			int Nsets = ParseInput();
 			int 1=0;
 			while(i<nsets){
@@ -87,7 +95,7 @@ void loop(){
 int ParseInput(){
 	Proc1 = Serial.read();
 	Proc2 = Serial.read();
-	for(int i=0;i<8;i++){
+	for(int i=0;i<4;i++){
 		Arguments[i] = Serial.read(); 
 	}
 	byte AddArgs = Serial.read();
@@ -103,7 +111,7 @@ int ParseInput(){
 int ParseArguments(int set){
 	int i=0;
 	for(i=0;i<16;i++){
-		Arguments[7+(set*16)+i] = Serial.read(); 
+		Arguments[4+(set*16)+i] = Serial.read(); 
 	}
 }
 
@@ -180,10 +188,16 @@ void EndCriticalSection(){ interrupts(); }
 	Note ::  please add your function to the function pointer array to enable calling it
 */
 
-// Functions of Infinite exectime
-
+// Simple Wave Functions
+/*
+	Sine wave
+	Triangulat rave
+	Squre wave
+	Slur rate and slew rate control
+	priscision in the output signal
+*/
 void Sinousoid(byte* inputs){
-	wave sinewave;
+	SimpleWave sinewave;
 	// section that parses input for relevant data usinng the memcpy approach for general funtions
 	memcpy (inputs sinewave,sizeof(sinewave));
 	//starttime = get time;
@@ -192,11 +206,40 @@ void Sinousoid(byte* inputs){
 	}
 	return ; 
 }
+void SquareWave(){
 
-void ReadEEPROMwave(byte inputs){
-	// parse through inut for playback frequenncy and sclaing amplitude and time to run innfinite looped signaal for
-}while this can still read EEPROM.read()
+}
 
+void Triangle(){
+	
+}
+
+void SigPWM(){
+
+}
+
+void SigMEM1(){
+// devide the 1kb space into 2 segments to save 2 waves i can adda bit to just save one large wave also
+}
+
+void SigMEM2(){
+
+}
+
+// Complex Waveforms [Signal Modulation toolkit ] (ones that take an additional argumetns buffer)
+/*
+AM 
+FM
+PWM
+*/
+void SigAM(){
+
+}
+
+
+// Utility to Read from and store sample waveform to the EEPROM
+
+void WriteEEPROMwave()
 /*
 void GenSin100(int a) { 
   Serial.println(a);
