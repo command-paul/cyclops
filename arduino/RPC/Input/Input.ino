@@ -8,12 +8,13 @@
 
 volatile byte Proc1 = 0;
 volatile byte Proc2 = 0;
-
-volatile byte EXECUTING = 0;
 extern volatile byte FLAG = 0;
-
+bool READY = 0;
 unsigned int EEPROM_Start = 0;
 unsigned int EEPROM_Ene = 0;
+
+int Nsets =0 ;// number of additional Argument blocks global for debug 
+byte StartChar =0 ; // global for debug
 //Global Variables End
 
 /*
@@ -67,15 +68,21 @@ This is designed around 1 byte long standard UART implementations
 			appropriately loades the new procedure
 */	
 
+/*
+To Test the Code pass the following via any serial monitor code and varify the output ascii values
+"R0112340S" == R -- proc1 = 0 -- proc2 == 1 -- args = 1234 -- 0 add 16 byte arg blocks -- S
+"R0112341SABCDEFGHIJKLMNOP" == R -- proc1 = 0 -- proc2 == 1 -- args = 1234 -- 0 add 16 byte arg blocks -- S -- 1 blck args == ABCDEFG..OP
+*/
+
 void setup(){
 	Serial.begin(115200);
 }
-byte ww;
+
 void loop(){
 	if(Serial.available()>=9){ // a good flag for avaislable serial will any way modify isr to signal end of recieved input
-		ww = Serial.read();
-		if((char)ww== 'R'){ // Checcking for 
-			int Nsets = ParseInput();
+		StartChar = Serial.read();
+		if((char)StartChar == 'R'){ // Checcking for 
+			Nsets = ParseInput();
 			Nsets =	Nsets -48; // For Temp DBG with MONITOR TEXT ENTRY
 			int i=0;
 			while(i<Nsets){
@@ -84,21 +91,41 @@ void loop(){
 					i++;
 					}
 				}
+			/*
+			// Debug to varify the integrity of the read data
 			for(int i=0;i<(4+(16*Nsets));i++){
 				Serial.print("  ");
 				Serial.print(Arguments[i]);
 				}
 			Serial.println();
+			*/
+			if (Nsets!=-1) READY = 1;
 			// Flag to signify correct input and ready to execute= 1;
 			}
+		// this is here in order to help make the code human readable will print for every invalid byte :P
+		else{
+			Serial.println("Format :: \"R\'Proc1\'\'Proc2\'\'Arg Bytes 0-4\'\'num blocks of add bytes\'S");
+			}
 		}
-	/*
-	if(!EXECUTING && INPUTREADY){
-		FP[OpCall](Arguments , Nargs);
-		// call function and pass in arguments 
-	
+	if(READY){
+		READY = 0; //  since we have started handling the exe req
+		Serial.println("checking Validity of procedure call id :: ");
+		// this If Else will be replaced with a neat funtion array indexd implemenataion :)
+		//FP[Proc1][proc2](Arguments); <- like this 
+		if((Proc1 == '0') && (Proc2 == '0')){
+			EchoInput(Arguments); // test ipt :: "R0012340S" 
+			}
+		else if((Proc1 == '0') && (Proc2 == '1')){
+			EchoLong(Arguments); // test ipt :: "R0112340S"
+			}
+		else if((Proc1 == '0') && (Proc2 == '2')){
+			EchoDouble(Arguments); // test ipt :: "R0212340S" 
+			}
+		else if((Proc1 == '0') && (Proc2 == '3')){
+			Echo5Longs(Arguments); // test ipt :: "R0312341SABCDEFGHIJKLMNOP"
+			}
+		
 		}
-	*/
 	}
 
 /* 	The main Parse input Function
@@ -116,11 +143,9 @@ int ParseInput(){
 	if((char)Stop == 'S') return AddArgs; // misc Error Checking :P
 	else return -1;
 }
-	
 /* 
 	Parses throught the input stream and appends arguments to the arguments array
 */
-
 int ParseArguments(int set){
 	int i=0;
 	for(i=0;i<16;i++){
@@ -217,9 +242,40 @@ FunctionSet Gen_Util[] = {};
 		EchoUART
 		TestWave2Dac
 		Stop
+		EchoInput
+		EchoDouble
+		EchoLong
+		Echo5Longs
 	*/
 
-FunctionSet Gen_Debug[] = {};
+void EchoInput(byte* inputs){
+	for(int i=0;i<(4+(16*Nsets));i++){
+		Serial.print("  ");
+		Serial.print(inputs[i]);
+		}
+	Serial.println();			
+	}
+
+void EchoLong(byte * inputs){
+	Serial.println(byte2long(inputs));
+}
+
+void EchoDouble(byte * inputs){
+	Serial.println(byte2double(inputs));	
+}
+
+void Echo5Longs(byte * inputs){
+	Serial.println(byte2long(inputs));
+	Serial.println(byte2long(inputs+4));
+	Serial.println(byte2long(inputs+8));
+	Serial.println(byte2long(inputs+12));
+	Serial.println(byte2long(inputs+16));
+}
+
+FunctionSet Gen_Debug[] = {EchoInput,
+						   EchoDouble,
+						   EchoLong,
+						   Echo5Longs};
 
 // Simple Wave Functions
 /*
